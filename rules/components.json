@@ -1,0 +1,66 @@
+{
+  "system": "Lumen",
+  "version": "0.1.0",
+  "global": [
+    { "id": "semantic-tokens", "rule": "Components use semantic tokens (color.text.*, color.surface.*, color.action.*, color.border.*, color.feedback.*), never color.palette.* directly." },
+    { "id": "no-raw-color", "rule": "No raw colour values (hex, rgb, hsl) or framework palette classes such as bg-blue-500. Use a token." },
+    { "id": "spacing-scale", "rule": "Padding, margin and gap use only the space scale (4, 8, 12, 16, 24, 32, 48 px)." },
+    { "id": "radius-scale", "rule": "Corner radius uses only radius.sm, radius.md, radius.lg or radius.full." },
+    { "id": "type-scale", "rule": "Font sizes use only font.size.sm, md, lg or xl." },
+    { "id": "use-components", "rule": "Use a Lumen component when one exists instead of restyling a native element." }
+  ],
+  "components": {
+    "Button": {
+      "import": "import { Button } from './components'",
+      "props": {
+        "variant": ["primary", "secondary", "danger"],
+        "size": ["sm", "md"],
+        "fullWidth": "boolean"
+      },
+      "tokens": ["color.action.primary", "color.action.primary-hover", "color.action.danger", "color.text.on-action", "radius.md", "space.2", "space.4"],
+      "rules": [
+        "At most one primary button per view.",
+        "Labels are short verbs in sentence case, for example 'Create account'.",
+        "Use variant=\"danger\" only for destructive actions."
+      ]
+    },
+    "TextField": {
+      "import": "import { TextField } from './components'",
+      "props": {
+        "label": "string, required",
+        "type": ["text", "email", "password"],
+        "hint": "string",
+        "error": "string"
+      },
+      "tokens": ["color.surface.default", "color.border.default", "color.border.focus", "color.feedback.danger", "radius.md", "space.2", "space.3"],
+      "rules": [
+        "Always pass a visible label. Placeholder text is not a label.",
+        "Show validation messages through the error prop, below the field."
+      ]
+    },
+    "Card": {
+      "import": "import { Card } from './components'",
+      "props": { "title": "string", "children": "node" },
+      "tokens": ["color.surface.default", "color.border.default", "radius.lg", "space.6"],
+      "rules": [
+        "Use cards to group related content. Do not nest cards.",
+        "Padding is fixed at space.6; do not override it."
+      ]
+    },
+    "Alert": {
+      "import": "import { Alert } from './components'",
+      "props": { "tone": ["success", "warning", "danger"], "children": "node" },
+      "tokens": ["color.feedback.*", "radius.md", "space.3", "space.4"],
+      "rules": [
+        "Use for messages that stay on screen until the situation changes, not for transient confirmations.",
+        "Lead with what happened, then what to do."
+      ]
+    },
+    "Stack": {
+      "import": "import { Stack } from './components'",
+      "props": { "gap": ["1", "2", "3", "4", "6", "8"], "children": "node" },
+      "tokens": ["space.*"],
+      "rules": ["Use Stack for vertical spacing between elements instead of margins."]
+    }
+  }
+}
