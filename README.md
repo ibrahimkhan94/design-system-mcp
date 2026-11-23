@@ -2,7 +2,7 @@
 
 Lumen is a small, machine-readable design system. Its tokens and component rules are data, an MCP server serves them to AI assistants, and a checker scores the UI those assistants produce.
 
-**Live demo:** _add the Vercel link here after the first deploy_
+**Live demo:** https://lumen-design-system-silk.vercel.app
 
 | Same prompt | Adherence score |
 | --- | --- |
