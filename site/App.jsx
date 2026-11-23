@@ -1,191 +1,308 @@
 import { Alert, Button, TextField } from '../components';
-import SignUpCard from '../samples/after.jsx';
+import AfterScreen from '../samples/after.jsx';
+import BeforeScreen from '../samples/before.jsx';
 import report from '../build/samples-report.json';
 import tokens from '../build/tokens.flat.json';
 import rules from '../rules/components.json';
+import { LINKS, SUMMARY, RULE_LABELS, STEPS, TERMS, USERS, METRICS, NEXT } from './content.js';
 
-const REPO = 'https://github.com/ibrahimkhan94/design-system-mcp';
 const [before, after] = report.samples;
 const semanticColors = tokens.filter((t) => t.type === 'color' && !t.name.startsWith('color.palette'));
 const spacing = tokens.filter((t) => t.name.startsWith('space.') && t.value !== '0px');
-const radii = tokens.filter((t) => t.name.startsWith('radius.'));
 const fontSizes = tokens.filter((t) => t.name.startsWith('font.size.'));
+const inventedColours = new Set(before.violations.filter((v) => v.found.startsWith('#')).map((v) => v.found.toLowerCase())).size;
+const issueCounts = Object.entries(
+  before.violations.reduce((acc, v) => ({ ...acc, [v.rule]: (acc[v.rule] ?? 0) + 1 }), {}),
+).sort((a, b) => b[1] - a[1]);
 
-function Score({ label, sample, tone }) {
+const NAV = [
+  ['problem', 'The problem'],
+  ['how', 'How it works'],
+  ['product', 'Product thinking'],
+  ['under-the-hood', 'Under the hood'],
+];
+
+function SectionHead({ index, eyebrow, title, intro }) {
   return (
-    <div className={`score score--${tone}`}>
-      <span className="score__label">{label}</span>
-      <span className="score__value">{sample.score}%</span>
-      <span className="score__meta">
-        {sample.onSystem} on-system values, {sample.offSystem} off-system
-      </span>
+    <div className="section-head">
+      <span className="section-head__index">{index}</span>
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
+        {intro && <p className="section-head__intro">{intro}</p>}
+      </div>
     </div>
   );
 }
 
-function Code({ children }) {
-  return <pre className="code"><code>{children}</code></pre>;
+function ScoreTile({ label, sample, tone }) {
+  return (
+    <div className={`tile score score--${tone}`}>
+      <span className="score__label">{label}</span>
+      <span className="score__value">{sample.score}%</span>
+      <span className="score__caption">of styling values came from the design system</span>
+    </div>
+  );
 }
 
 export default function App() {
-  const violationsByRule = before.violations.reduce((acc, v) => ({ ...acc, [v.rule]: (acc[v.rule] ?? 0) + 1 }), {});
-
   return (
-    <main className="page">
-      <header className="hero">
-        <p className="eyebrow">Design systems for AI-assisted building</p>
-        <h1>Lumen: a design system that AI assistants can read</h1>
-        <p className="lead">
-          Most design systems are written for people: documentation pages and static libraries. When an AI assistant
-          builds UI, it never sees them, so it invents colours, spacing and components. Lumen exposes its tokens and
-          component rules to assistants through an MCP server, then scores the UI they produce.
-        </p>
-        <div className="scores">
-          <Score label="Without the system" sample={before} tone="before" />
-          <Score label="With the system" sample={after} tone="after" />
-        </div>
-        <p className="note">
-          Same prompt, scored by the included checker. Prompt: “{report.prompt}”
-        </p>
-        <div className="actions">
-          <a className="ds-button ds-button--primary" href={REPO}>View on GitHub</a>
-          <a className="ds-button ds-button--secondary" href="#how">How it works</a>
-        </div>
-      </header>
-
-      <section id="how" className="section">
-        <h2>How it works</h2>
-        <ol className="steps">
-          <li>
-            <h3>1. Tokens and rules as data</h3>
-            <p>Colours, spacing, radius and type live in one W3C design-tokens file. Component usage rules live in JSON, not prose.</p>
-          </li>
-          <li>
-            <h3>2. Served over MCP</h3>
-            <p>
-              The assistant calls <code>get_tokens</code> and <code>get_component_rules</code> before it writes UI, so it builds
-              with the system instead of guessing.
-            </p>
-          </li>
-          <li>
-            <h3>3. Checked before it ships</h3>
-            <p>
-              <code>check_ui</code> scores the result and returns each off-system value with the token to use instead. The
-              assistant fixes them and checks again.
-            </p>
-          </li>
-        </ol>
-      </section>
-
-      <section className="section">
-        <h2>Before and after</h2>
-        <div className="compare">
-          <div className="panel">
-            <h3>Without the system: {before.score}%</h3>
-            <ul className="tally">
-              {Object.entries(violationsByRule).map(([rule, n]) => (
-                <li key={rule}><code>{rule}</code> {n}</li>
-              ))}
-            </ul>
-            <Code>{before.code}</Code>
-            <h3 className="fixes-title">What check_ui returns</h3>
-            <ul className="fixes">
-              {before.violations.slice(0, 8).map((v, i) => (
-                <li key={i}>
-                  <span className="muted">line {v.line}</span> <code>{v.found}</code> {v.fix}
-                </li>
-              ))}
-            </ul>
-            <p className="muted">and {before.violations.length - 8} more.</p>
+    <>
+      <nav className="topbar" aria-label="Sections">
+        <div className="topbar__inner">
+          <a href="#overview" className="brand">
+            <span className="brand__mark" aria-hidden="true" />
+            Lumen
+          </a>
+          <div className="topbar__links">
+            {NAV.map(([id, label]) => (
+              <a key={id} href={`#${id}`}>{label}</a>
+            ))}
           </div>
-          <div className="panel">
-            <h3>With the system: {after.score}%</h3>
-            <div className="preview"><SignUpCard /></div>
-            <Code>{after.code}</Code>
-          </div>
+          <a className="ds-button ds-button--secondary ds-button--sm" href={LINKS.repo}>GitHub</a>
         </div>
-      </section>
+      </nav>
 
-      <section className="section">
-        <h2>Tokens</h2>
-        <p className="muted">{tokens.length} tokens, generated from <code>tokens/tokens.json</code> with Style Dictionary.</p>
-        <h3>Semantic colours</h3>
-        <div className="swatches">
-          {semanticColors.map((t) => (
-            <div key={t.name} className="swatch">
-              <span className="swatch__chip" style={{ background: `var(${t.cssVar})` }} />
-              <code>{t.name.replace('color.', '')}</code>
-              <span className="muted">{t.value}</span>
-            </div>
-          ))}
-        </div>
-        <div className="token-grid">
-          <div>
-            <h3>Spacing</h3>
-            {spacing.map((t) => (
-              <div key={t.name} className="bar-row">
-                <code>{t.name}</code>
-                <span className="bar" style={{ width: `calc(var(${t.cssVar}) * 4)` }} />
-                <span className="muted">{t.value}</span>
+      <main className="page">
+        <header id="overview" className="hero">
+          <p className="byline">
+            A product exploration by <strong>Ibrahim Adil</strong>, Product Manager ·{' '}
+            <a href={LINKS.linkedin}>LinkedIn</a>
+          </p>
+          <h1>Lumen: a design system that AI assistants can read</h1>
+          <p className="lead">
+            A working prototype that turns a design system into something AI assistants can look up while they build
+            UI, and measures how closely they follow it.
+          </p>
+
+          <div className="summary">
+            {SUMMARY.map((s, i) => (
+              <div key={s.label} className="tile summary__item">
+                <span className="pill">{i + 1}</span>
+                <h3>{s.label}</h3>
+                <p>{s.text}</p>
               </div>
             ))}
           </div>
-          <div>
-            <h3>Radius</h3>
-            <div className="radii">
-              {radii.map((t) => (
-                <div key={t.name} className="radius">
-                  <span className="radius__box" style={{ borderRadius: `var(${t.cssVar})` }} />
-                  <code>{t.name.replace('radius.', '')}</code>
+
+          <div className="score-row">
+            <ScoreTile label="AI without the design system" sample={before} tone="before" />
+            <span className="score-row__arrow" aria-hidden="true">→</span>
+            <ScoreTile label="AI with Lumen" sample={after} tone="after" />
+          </div>
+          <p className="disclaimer">
+            <span className="badge">Illustrative samples</span> Both screens answer the same request and are scored by the
+            included checker. The samples are hand-written examples of typical output; recorded AI runs are the next step.
+          </p>
+        </header>
+
+        <section id="problem" className="section">
+          <SectionHead
+            index="01"
+            eyebrow="The problem"
+            title="Same request, two very different screens"
+            intro={`Request: “${report.prompt}”`}
+          />
+          <div className="compare">
+            <article className="tile compare__card compare__card--before">
+              <header className="compare__head">
+                <h3>Without the design system</h3>
+                <span className="chip chip--danger">{before.offSystem} issues</span>
+              </header>
+              <div className="screen screen--before"><BeforeScreen /></div>
+              <ul className="issues">
+                {issueCounts.map(([rule, n]) => (
+                  <li key={rule}>
+                    <span>
+                      <strong>{n}</strong> {RULE_LABELS[rule] ?? rule}
+                      {rule === 'no-raw-color' && `, in ${inventedColours} different shades picked by eye`}
+                    </span>
+                  </li>
+                ))}
+                <li><span>Placeholders used instead of labels</span></li>
+              </ul>
+            </article>
+
+            <article className="tile compare__card compare__card--after">
+              <header className="compare__head">
+                <h3>With Lumen</h3>
+                <span className="chip chip--success">0 issues</span>
+              </header>
+              <div className="screen"><AfterScreen /></div>
+              <ul className="issues issues--good">
+                <li><span>Every colour and size comes from a named token</span></li>
+                <li><span>Built from existing components, not restyled HTML</span></li>
+                <li><span>Visible labels and an error message under the field</span></li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="how" className="section">
+          <SectionHead
+            index="02"
+            eyebrow="How it works"
+            title="Four steps from rulebook to on-brand screen"
+            intro="Each step in plain words, with the technical detail underneath."
+          />
+          <ol className="steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="tile step">
+                <span className="step__num">{i + 1}</span>
+                <h3>{s.title}</h3>
+                <p>{s.plain}</p>
+                <p className="step__tech"><span>Under the hood</span>{s.tech}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="tile terms">
+            <h3>Key terms</h3>
+            <dl>
+              {TERMS.map((t) => (
+                <div key={t.term}>
+                  <dt>{t.term}</dt>
+                  <dd>{t.def}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        <section id="product" className="section">
+          <SectionHead index="03" eyebrow="Product thinking" title="Who it serves, how to measure it, what comes next" />
+          <div className="product-grid">
+            <div className="tile">
+              <h3>Who it is for</h3>
+              <ul className="list">
+                {USERS.map((u) => (
+                  <li key={u.who}><strong>{u.who}</strong><span>{u.need}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div className="tile">
+              <h3>How I would measure success</h3>
+              <ul className="list">
+                {METRICS.map((m) => (
+                  <li key={m.metric}><strong>{m.metric}</strong><span>{m.why}</span></li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="tile roadmap">
+            <h3>What I would build next</h3>
+            <ol className="roadmap__list">
+              {NEXT.map((n, i) => (
+                <li key={n.title}>
+                  <span className="roadmap__num">0{i + 1}</span>
+                  <strong>{n.title}</strong>
+                  <span>{n.text}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section id="under-the-hood" className="section">
+          <SectionHead
+            index="04"
+            eyebrow="Under the hood"
+            title="The system itself"
+            intro={`${tokens.length} tokens, ${Object.keys(rules.components).length} components and the code behind the comparison.`}
+          />
+
+          <div className="tile">
+            <h3>Colour tokens, named by purpose</h3>
+            <div className="swatches">
+              {semanticColors.map((t) => (
+                <div key={t.name} className="swatch">
+                  <span className="swatch__chip" style={{ background: `var(${t.cssVar})` }} />
+                  <code>{t.name.replace('color.', '')}</code>
+                  <span className="muted">{t.value}</span>
                 </div>
               ))}
             </div>
-            <h3>Type</h3>
-            {fontSizes.map((t) => (
-              <p key={t.name} className="type-row" style={{ fontSize: `var(${t.cssVar})` }}>
-                {t.name.replace('font.size.', '')} · {t.value}
-              </p>
-            ))}
           </div>
-        </div>
-      </section>
 
-      <section className="section">
-        <h2>Components</h2>
-        <p className="muted">
-          {Object.keys(rules.components).length} components, each with props, tokens and usage rules the assistant can read.
-        </p>
-        <div className="component-grid">
-          <div className="panel">
-            <h3>Button</h3>
-            <div className="row">
-              <Button>Create account</Button>
-              <Button variant="secondary">Cancel</Button>
-              <Button variant="danger">Delete</Button>
+          <div className="product-grid">
+            <div className="tile">
+              <h3>Spacing scale</h3>
+              {spacing.map((t) => (
+                <div key={t.name} className="bar-row">
+                  <code>{t.name}</code>
+                  <span className="bar" style={{ width: `calc(var(${t.cssVar}) * 4)` }} />
+                  <span className="muted">{t.value}</span>
+                </div>
+              ))}
             </div>
-            <ul className="rules">{rules.components.Button.rules.map((r) => <li key={r}>{r}</li>)}</ul>
-          </div>
-          <div className="panel">
-            <h3>TextField</h3>
-            <TextField label="Email" type="email" hint="We never share it." />
-            <ul className="rules">{rules.components.TextField.rules.map((r) => <li key={r}>{r}</li>)}</ul>
-          </div>
-          <div className="panel">
-            <h3>Alert</h3>
-            <div className="stack">
-              <Alert tone="success">Settings saved.</Alert>
-              <Alert tone="warning">Your trial ends in 3 days.</Alert>
-              <Alert tone="danger">Payment failed. Update your card.</Alert>
+            <div className="tile">
+              <h3>Type scale</h3>
+              {fontSizes.map((t) => (
+                <p key={t.name} className="type-row" style={{ fontSize: `var(${t.cssVar})` }}>
+                  {t.name.replace('font.size.', '')} · {t.value}
+                </p>
+              ))}
             </div>
-            <ul className="rules">{rules.components.Alert.rules.map((r) => <li key={r}>{r}</li>)}</ul>
           </div>
-        </div>
-      </section>
 
-      <footer className="footer">
-        <span>Built by Ibrahim Adil as a product exploration of design systems for AI-assisted workflows.</span>
-        <a href={REPO}>Source on GitHub</a>
-      </footer>
-    </main>
+          <div className="component-grid">
+            <div className="tile">
+              <h3>Button</h3>
+              <div className="row">
+                <Button>Create account</Button>
+                <Button variant="secondary">Cancel</Button>
+                <Button variant="danger">Delete</Button>
+              </div>
+              <ul className="rules">{rules.components.Button.rules.map((r) => <li key={r}>{r}</li>)}</ul>
+            </div>
+            <div className="tile">
+              <h3>TextField</h3>
+              <TextField label="Email" type="email" hint="We never share it." />
+              <ul className="rules">{rules.components.TextField.rules.map((r) => <li key={r}>{r}</li>)}</ul>
+            </div>
+            <div className="tile">
+              <h3>Alert</h3>
+              <div className="stack">
+                <Alert tone="success">Settings saved.</Alert>
+                <Alert tone="danger">Payment failed. Update your card.</Alert>
+              </div>
+              <ul className="rules">{rules.components.Alert.rules.map((r) => <li key={r}>{r}</li>)}</ul>
+            </div>
+          </div>
+
+          <details className="tile code-toggle">
+            <summary>Show the code and the checker's fixes</summary>
+            <div className="compare">
+              <div>
+                <h3>Without the design system · {before.score}%</h3>
+                <pre className="code"><code>{before.code}</code></pre>
+                <ul className="fixes">
+                  {before.violations.slice(0, 8).map((v, i) => (
+                    <li key={i}><span className="muted">line {v.line}</span> <code>{v.found}</code> {v.fix}</li>
+                  ))}
+                </ul>
+                <p className="muted">and {before.violations.length - 8} more.</p>
+              </div>
+              <div>
+                <h3>With Lumen · {after.score}%</h3>
+                <pre className="code"><code>{after.code}</code></pre>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <footer className="footer">
+          <div>
+            <strong>Ibrahim Adil</strong>, Product Manager · Munich
+            <p className="muted">Built as a product exploration of design systems for AI-assisted building.</p>
+          </div>
+          <div className="footer__links">
+            <a href={LINKS.linkedin}>LinkedIn</a>
+            <a href={LINKS.repo}>Source on GitHub</a>
+          </div>
+        </footer>
+      </main>
+    </>
   );
 }
